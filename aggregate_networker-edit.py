@@ -573,9 +573,9 @@ if __name__ == "__main__":
     # tprFile = TPRreader('../{}.tpr'.format(args.fileName))
     # trajectory_dt = tprFile.trajectory_timestep()
 
-    trajectory_dt = 2000
-    analysis_dt = 2000
-    sim_time = 1000000
+    trajectory_dt = 200 #ps
+    analysis_dt = 10000 #ps 
+    sim_time = 1000000  #ps
 
     n_steps = int(sim_time / analysis_dt)
 
@@ -589,7 +589,7 @@ if __name__ == "__main__":
 
         time_curr = init_time + i*analysis_dt
 
-        system("echo '2' | gmx trjconv -f ../{0}.xtc -s ../{0}.tpr -dump {1} -o {0}-{1}.pdb -b {2}".format(args.fileName, time_curr, time_curr-trajectory_dt))
+        system("echo '0' | gmx trjconv -f ../{0}.xtc -s ../{0}.tpr -dump {1} -o {0}-{1}.pdb -b {2}".format(args.fileName, time_curr, time_curr-trajectory_dt))
         
         print(args.fileName)
         print("{0}-{1}.pdb".format(args.fileName, time_curr))
@@ -601,6 +601,14 @@ if __name__ == "__main__":
         for size in cluster_sizes:
             data_array[i]['{}'.format(size)] = data_array[i].get('{}'.format(size), 0) + 1
         
+        network.save_clusters('clusters.dat', time_curr) #!!!!!
+
+        fig = plt.figure(figsize=(8, 6))
+        nx.draw(
+        network.dist_graph_filtered(),
+        with_labels=True)
+        
+        plt.savefig('{}.png'.format(time_curr))
 
     # Determine the number of dictionaries and the range of keys
     num_dicts = len(data_array)
@@ -615,20 +623,23 @@ if __name__ == "__main__":
         for clustersize, numclusters in datadict.items():
             array[dataindex, int(clustersize) - 1] = numclusters
 
+   
+
     colors = ["#ffffff", "#004488"]
     colormap = LinearSegmentedColormap.from_list("custom_cmap", colors)
 
     # Plot the 2D color map
     plt.figure(figsize=(10, 6))
     plt.imshow(array.T, aspect='auto', cmap=colormap, interpolation='none')
-    plt.colorbar(label='Number of Clusters')
+    plt.colorbar(label='Number of Aggregates')
 
     # Set x and y axis labels
-    plt.xlabel('Analysis Step')
-    plt.ylabel('Cluster Size')
+    plt.xlabel('Time (ns)')
+    plt.ylabel('Aggregate Size')
 
     # Set the y-axis ticks and labels
     plt.yticks(ticks=np.arange(num_keys), labels=keys)
+    plt.xticks(ticks=[0, 125,250,375,500], labels=[0, 1250,2500,3750,5000])
 
     plt.gca().invert_yaxis()
 
